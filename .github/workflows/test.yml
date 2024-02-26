@@ -25,7 +25,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - run: git submodule update --init actions-toolkit
+    - run: |
+        git submodule update --init actions-toolkit
+        cd actions-toolkit/packages/artifact
+        npm install 
 
     - name: Setup Node 20
       uses: actions/setup-node@v4

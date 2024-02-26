@@ -19,12 +19,15 @@ on:
 
 jobs:
   check-dist:
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-default
 
     steps:
       - uses: actions/checkout@v4
 
-      - run: git submodule update --init actions-toolkit
+      - run: |
+          git submodule update --init actions-toolkit
+          cd actions-toolkit/packages/artifact
+          npm install 
 
       - name: Setup Node 20
         uses: actions/setup-node@v4
