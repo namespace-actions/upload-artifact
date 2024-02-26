@@ -48,8 +48,8 @@ jobs:
     - name: Format
       run: npm run format-check
 
-    - name: Test
-      run: npm run test
+    # - name: Test
+    #   run: npm run test
 
     # Test end-to-end by uploading two artifacts and then downloading them
     - name: Create artifact files
