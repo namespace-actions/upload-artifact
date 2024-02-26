@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        runs-on: [ubuntu-latest, macos-latest, windows-latest]
+        runs-on: [namespace-profile-default, namespace-profile-default-arm64, namespace-profile-macos-sm]
       fail-fast: false
 
     runs-on: ${{ matrix.runs-on }}
@@ -24,6 +24,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
+    - run: git submodule update --init actions-toolkit
 
     - name: Setup Node 20
       uses: actions/setup-node@v4
@@ -81,7 +83,7 @@ jobs:
 
     # Download Artifact #1 and verify the correctness of the content
     - name: 'Download artifact #1'
-      uses: actions/download-artifact@v4
+      uses: namespace-actions/download-artifact@v0
       with:
         name: 'Artifact-A-${{ matrix.runs-on }}'
         path: some/new/path
@@ -101,7 +103,7 @@ jobs:
 
     # Download Artifact #2 and verify the correctness of the content
     - name: 'Download artifact #2'
-      uses: actions/download-artifact@v4
+      uses: namespace-actions/download-artifact@v0
       with:
         name: 'Artifact-Wildcard-${{ matrix.runs-on }}'
         path: some/other/path
@@ -122,7 +124,7 @@ jobs:
 
     # Download Artifact #4 and verify the correctness of the content
     - name: 'Download artifact #4'
-      uses: actions/download-artifact@v4
+      uses: namespace-actions/download-artifact@v0
       with:
         name: 'Multi-Path-Artifact-${{ matrix.runs-on }}'
         path: multi/artifact
@@ -155,7 +157,7 @@ jobs:
 
     # Download replaced Artifact #1 and verify the correctness of the content
     - name: 'Download artifact #1 again'
-      uses: actions/download-artifact@v4
+      uses: namespace-actions/download-artifact@v0
       with:
         name: 'Artifact-A-${{ matrix.runs-on }}'
         path: overwrite/some/new/path
@@ -189,7 +191,7 @@ jobs:
         # easier to identify each of the merged artifacts
         separate-directories: true
     - name: 'Download merged artifacts'
-      uses: actions/download-artifact@v4
+      uses: namespace-actions/download-artifact@v0
       with:
         name: merged-artifacts
         path: all-merged-artifacts
@@ -225,7 +227,7 @@ jobs:
 
     # Download merged artifacts and verify the correctness of the content
     - name: 'Download merged artifacts'
-      uses: actions/download-artifact@v4
+      uses: namespace-actions/download-artifact@v0
       with:
         name: Merged-Artifact-As
         path: merged-artifact-a
