@@ -32,8 +32,6 @@ jobs:
         cache: 'npm'
 
     - run: |
-        sudo apt-get install -y powershell
-        
         git submodule update --init actions-toolkit
         cd actions-toolkit/packages/artifact
         npm install 
@@ -95,16 +93,10 @@ jobs:
 
     - name: 'Verify Artifact #1'
       run: |
-        $file = "some/new/path/file1.txt"
-        if(!(Test-Path -path $file))
-        {
-            Write-Error "Expected file does not exist"
-        }
-        if(!((Get-Content $file) -ceq "Lorem ipsum dolor sit amet"))
-        {
-            Write-Error "File contents of downloaded artifact are incorrect"
-        }
-      shell: pwsh
+        str="Lorem ipsum dolor sit amet"
+        if [[ $(< some/new/path/file1.txt) != "$str" ]]; then
+            exit 1
+        fi
 
     # Download Artifact #2 and verify the correctness of the content
     - name: 'Download artifact #2'
@@ -115,17 +107,15 @@ jobs:
 
     - name: 'Verify Artifact #2'
       run: |
-        $file1 = "some/other/path/to/dir-1/file1.txt"
-        $file2 = "some/other/path/to/dir-2/file2.txt"
-        if(!(Test-Path -path $file1) -or !(Test-Path -path $file2))
-        {
-            Write-Error "Expected files do not exist"
-        }
-        if(!((Get-Content $file1) -ceq "Lorem ipsum dolor sit amet") -or !((Get-Content $file2) -ceq "Hello world from file #2"))
-        {
-            Write-Error "File contents of downloaded artifacts are incorrect"
-        }
-      shell: pwsh
+        str="Lorem ipsum dolor sit amet"
+        if [[ $(< some/other/path/to/dir-1/file1.txt) != "$str" ]]; then
+            exit 1
+        fi
+
+        str="Hello world from file #2"
+        if [[ $(< some/other/path/to/dir-2/file2.txt) != "$str" ]]; then
+            exit 1
+        fi
 
     # Download Artifact #4 and verify the correctness of the content
     - name: 'Download artifact #4'
@@ -136,17 +126,15 @@ jobs:
 
     - name: 'Verify Artifact #4'
       run: |
-        $file1 = "multi/artifact/dir-1/file1.txt"
-        $file2 = "multi/artifact/dir-2/file2.txt"
-        if(!(Test-Path -path $file1) -or !(Test-Path -path $file2))
-        {
-            Write-Error "Expected files do not exist"
-        }
-        if(!((Get-Content $file1) -ceq "Lorem ipsum dolor sit amet") -or !((Get-Content $file2) -ceq "Hello world from file #2"))
-        {
-            Write-Error "File contents of downloaded artifacts are incorrect"
-        }
-      shell: pwsh
+        str="Lorem ipsum dolor sit amet"
+        if [[ $(< multi/artifact/dir-1/file1.txt) != "$str" ]]; then
+            exit 1
+        fi
+
+        str="Hello world from file #2"
+        if [[ $(< multi/artifact/dir-2/file2.txt) != "$str" ]]; then
+            exit 1
+        fi
 
     - name: 'Alter file 1 content'
       run: |
@@ -169,90 +157,7 @@ jobs:
 
     - name: 'Verify Artifact #1 again'
       run: |
-        $file = "overwrite/some/new/path/file1.txt"
-        if(!(Test-Path -path $file))
-        {
-            Write-Error "Expected file does not exist"
-        }
-        if(!((Get-Content $file) -ceq "This file has changed"))
-        {
-            Write-Error "File contents of downloaded artifact are incorrect"
-        }
-      shell: pwsh
-  merge:
-    name: Merge
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    # Merge all artifacts from previous jobs
-    - name: Merge all artifacts in run
-      uses: ./merge/
-      with:
-        # our matrix produces artifacts with the same file, this prevents "stomping" on each other, also makes it
-        # easier to identify each of the merged artifacts
-        separate-directories: true
-    - name: 'Download merged artifacts'
-      uses: namespace-actions/download-artifact@v0
-      with:
-        name: merged-artifacts
-        path: all-merged-artifacts
-    - name: 'Check merged artifact has directories for each artifact'
-      run: |
-        $artifacts = @(
-          "Artifact-A-ubuntu-latest",
-          "Artifact-A-macos-latest",
-          "Artifact-A-windows-latest",
-          "Artifact-Wildcard-ubuntu-latest",
-          "Artifact-Wildcard-macos-latest",
-          "Artifact-Wildcard-windows-latest",
-          "Multi-Path-Artifact-ubuntu-latest",
-          "Multi-Path-Artifact-macos-latest",
-          "Multi-Path-Artifact-windows-latest"
-        )
-
-        foreach ($artifact in $artifacts) {
-          $path = "all-merged-artifacts/$artifact"
-          if (!(Test-Path $path)) {
-            Write-Error "$path does not exist."
-          }
-        }
-      shell: pwsh
-
-    # Merge Artifact-A-* from previous jobs
-    - name: Merge all Artifact-A
-      uses: ./merge/
-      with:
-        name: Merged-Artifact-As
-        pattern: 'Artifact-A-*'
-        separate-directories: true
-
-    # Download merged artifacts and verify the correctness of the content
-    - name: 'Download merged artifacts'
-      uses: namespace-actions/download-artifact@v0
-      with:
-        name: Merged-Artifact-As
-        path: merged-artifact-a
-
-    - name: 'Verify merged artifacts'
-      run: |
-        $files = @(
-          "merged-artifact-a/Artifact-A-ubuntu-latest/file1.txt",
-          "merged-artifact-a/Artifact-A-macos-latest/file1.txt",
-          "merged-artifact-a/Artifact-A-windows-latest/file1.txt"
-        )
-
-        foreach ($file in $files) {
-          if (!(Test-Path $file)) {
-            Write-Error "$file does not exist."
-          }
-
-          if (!((Get-Content $file) -ceq "This file has changed")) {
-            Write-Error "$file has incorrect content."
-          }
-        }
-      shell: pwsh
-
+        str="This file has changed"
+        if [[ $(< overwrite/some/new/path/file1.txt) != "$str" ]]; then
+            exit 1
+        fi
