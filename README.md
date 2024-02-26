@@ -1,72 +1,17 @@
-# `@actions/upload-artifact`
+# `namespace-actions/upload-artifact`
 
-Upload [Actions Artifacts](https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts) from your Workflow Runs. Internally powered by [@actions/artifact](https://github.com/actions/toolkit/tree/main/packages/artifact) package.
+Namespace's version of Upload [Actions Artifacts](https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts) compatible with the [upload-artifact](https://github.com/actions/upload-artifact).
 
-See also [download-artifact](https://github.com/actions/download-artifact).
+The artifacts are stored in Namespace internal storage. They will not be visible and billed in GitHub.
 
-- [`@actions/upload-artifact`](#actionsupload-artifact)
-  - [v4 - What's new](#v4---whats-new)
-    - [Improvements](#improvements)
-    - [Breaking Changes](#breaking-changes)
-  - [Usage](#usage)
-    - [Inputs](#inputs)
-    - [Outputs](#outputs)
-  - [Examples](#examples)
-    - [Upload an Individual File](#upload-an-individual-file)
-    - [Upload an Entire Directory](#upload-an-entire-directory)
-    - [Upload using a Wildcard Pattern](#upload-using-a-wildcard-pattern)
-    - [Upload using Multiple Paths and Exclusions](#upload-using-multiple-paths-and-exclusions)
-    - [Altering compressions level (speed v. size)](#altering-compressions-level-speed-v-size)
-    - [Customization if no files are found](#customization-if-no-files-are-found)
-    - [(Not) Uploading to the same artifact](#not-uploading-to-the-same-artifact)
-    - [Environment Variables and Tilde Expansion](#environment-variables-and-tilde-expansion)
-    - [Retention Period](#retention-period)
-    - [Using Outputs](#using-outputs)
-      - [Example output between steps](#example-output-between-steps)
-      - [Example output between jobs](#example-output-between-jobs)
-    - [Overwriting an Artifact](#overwriting-an-artifact)
-  - [Limitations](#limitations)
-    - [Number of Artifacts](#number-of-artifacts)
-    - [Zip archives](#zip-archives)
-    - [Permission Loss](#permission-loss)
-  - [Where does the upload go?](#where-does-the-upload-go)
-
-
-## v4 - What's new
-
-> [!IMPORTANT]
-> upload-artifact@v4+ is not currently supported on GHES yet. If you are on GHES, you must use [v3](https://github.com/actions/upload-artifact/releases/tag/v3).
-
-The release of upload-artifact@v4 and download-artifact@v4 are major changes to the backend architecture of Artifacts. They have numerous performance and behavioral improvements.
-
-For more information, see the [`@actions/artifact`](https://github.com/actions/toolkit/tree/main/packages/artifact) documentation.
-
-There is also a new sub-action, `actions/upload-artifact/merge`. For more info, check out that action's [README](./merge/README.md).
-
-### Improvements
-
-1. Uploads are significantly faster, upwards of 90% improvement in worst case scenarios.
-2. Once uploaded, an Artifact ID is returned and Artifacts are immediately available in the UI and [REST API](https://docs.github.com/en/rest/actions/artifacts). Previously, you would have to wait for the run to be completed before an ID was available or any APIs could be utilized.
-3. The contents of an Artifact are uploaded together into an _immutable_ archive. They cannot be altered by subsequent jobs unless the Artifacts are deleted and recreated (where they will have a new ID). Both of these factors help reduce the possibility of accidentally corrupting Artifact files.
-4. The compression level of an Artifact can be manually tweaked for speed or size reduction.
-
-### Breaking Changes
-
-1. On self hosted runners, additional [firewall rules](https://github.com/actions/toolkit/tree/main/packages/artifact#breaking-changes) may be required.
-2. Uploading to the same named Artifact multiple times.
-
-    Due to how Artifacts are created in this new version, it is no longer possible to upload to the same named Artifact multiple times. You must either split the uploads into multiple Artifacts with different names, or only upload once. Otherwise you _will_ encounter an error.
-
-3. Limit of Artifacts for an individual job. Each job in a workflow run now has a limit of 500 artifacts.
-
-For assistance with breaking changes, see [MIGRATION.md](docs/MIGRATION.md).
+Download artifacts with [download-artifact](https://github.com/namespace-actions/download-artifact).
 
 ## Usage
 
 ### Inputs
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     # Name of the artifact to upload.
     # Optional. Default is 'artifact'
@@ -118,7 +63,7 @@ For assistance with breaking changes, see [MIGRATION.md](docs/MIGRATION.md).
 steps:
 - run: mkdir -p path/to/artifact
 - run: echo hello > path/to/artifact/world.txt
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     name: my-artifact
     path: path/to/artifact/world.txt
@@ -127,7 +72,7 @@ steps:
 ### Upload an Entire Directory
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     name: my-artifact
     path: path/to/artifact/ # or path/to/artifact
@@ -136,7 +81,7 @@ steps:
 ### Upload using a Wildcard Pattern
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     name: my-artifact
     path: path/**/[abc]rtifac?/*
@@ -145,7 +90,7 @@ steps:
 ### Upload using Multiple Paths and Exclusions
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     name: my-artifact
     path: |
@@ -193,7 +138,7 @@ For instance, if you are uploading random binary data, you can save a lot of tim
 - name: Make a 1GB random binary file
   run: |
     dd if=/dev/urandom of=my-1gb-file bs=1M count=1000
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     name: my-artifact
     path: my-1gb-file
@@ -206,7 +151,7 @@ But, if you are uploading data that is easily compressed (like plaintext, code, 
 - name: Make a file with a lot of repeated text
   run: |
     for i in {1..100000}; do echo -n 'foobar' >> foobar.txt; done
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     name: my-artifact
     path: foobar.txt
@@ -218,7 +163,7 @@ But, if you are uploading data that is easily compressed (like plaintext, code, 
 If a path (or paths), result in no files being found for the artifact, the action will succeed but print out a warning. In certain scenarios it may be desirable to fail the action or suppress the warning. The `if-no-files-found` option allows you to customize the behavior of the action if no files are found:
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     name: my-artifact
     path: path/to/artifact/
@@ -227,17 +172,17 @@ If a path (or paths), result in no files being found for the artifact, the actio
 
 ### (Not) Uploading to the same artifact
 
-Unlike earlier versions of `upload-artifact`, uploading to the same artifact via multiple jobs is _not_ supported with `v4`.
+Uploading to the same artifact via multiple jobs is _not_ supported.
 
 ```yaml
 - run: echo hi > world.txt
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     # implicitly named as 'artifact'
     path: world.txt
 
 - run: echo howdy > extra-file.txt
-- uses: actions/upload-artifact@v4
+- uses: namespace-actions/upload-artifact@v0
   with:
     # also implicitly named as 'artifact', will fail here!
     path: extra-file.txt
@@ -263,7 +208,7 @@ jobs:
     - name: Build
       run: ./some-script --version=${{ matrix.version }} > my-binary
     - name: Upload
-      uses: actions/upload-artifact@v4
+      uses: namespace-actions/upload-artifact@v0
       with:
         name: binary-${{ matrix.os }}-${{ matrix.version }}
         path: my-binary
@@ -281,7 +226,7 @@ You can use `~` in the path input as a substitute for `$HOME`. Basic tilde expan
   - run: |
       mkdir -p ~/new/artifact
       echo hello > ~/new/artifact/world.txt
-  - uses: actions/upload-artifact@v4
+  - uses: namespace-actions/upload-artifact@v0
     with:
       name: my-artifacts
       path: ~/new/**/*
@@ -296,7 +241,7 @@ Environment variables along with context expressions can also be used for input.
     - run: |
         mkdir -p ${{ github.workspace }}/artifact
         echo hello > ${{ github.workspace }}/artifact/world.txt
-    - uses: actions/upload-artifact@v4
+    - uses: namespace-actions/upload-artifact@v0
       with:
         name: ${{ env.name }}-name
         path: ${{ github.workspace }}/artifact/**/*
@@ -310,7 +255,7 @@ For environment variables created in other steps, make sure to use the `env` exp
         mkdir testing
         echo "This is a file to upload" > testing/file.txt
         echo "artifactPath=testing/file.txt" >> $GITHUB_ENV
-    - uses: actions/upload-artifact@v4
+    - uses: namespace-actions/upload-artifact@v0
       with:
         name: artifact
         path: ${{ env.artifactPath }} # this will resolve to testing/file.txt at runtime
@@ -325,7 +270,7 @@ Artifacts are retained for 90 days by default. You can specify a shorter retenti
     run: echo "I won't live long" > my_file.txt
 
   - name: Upload Artifact
-    uses: actions/upload-artifact@v4
+    uses: namespace-actions/upload-artifact@v0
     with:
       name: my-artifact
       path: my_file.txt
@@ -341,7 +286,7 @@ If an artifact upload is successful then an `artifact-id` output is available. T
 #### Example output between steps
 
 ```yml
-    - uses: actions/upload-artifact@v4
+    - uses: namespace-actions/upload-artifact@v0
       id: artifact-upload-step
       with:
         name: my-artifact
@@ -360,7 +305,7 @@ jobs:
     outputs:
       output1: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     steps:
-      - uses: actions/upload-artifact@v4
+      - uses: namespace-actions/upload-artifact@v0
         id: artifact-upload-step
         with:
           name: my-artifact
@@ -386,7 +331,7 @@ jobs:
       - name: Create a file
         run: echo "hello world" > my-file.txt
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: namespace-actions/upload-artifact@v0
         with:
           name: my-artifact # NOTE: same artifact name
           path: my-file.txt
@@ -397,7 +342,7 @@ jobs:
       - name: Create a different file
         run: echo "goodbye world" > my-file.txt
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: namespace-actions/upload-artifact@v0
         with:
           name: my-artifact # NOTE: same artifact name
           path: my-file.txt
@@ -405,12 +350,6 @@ jobs:
 ```
 
 ## Limitations
-
-### Number of Artifacts
-
-Within an individual job, there is a limit of 500 artifacts that can be created for that job.
-
-You may also be limited by Artifacts if you have exceeded your shared storage quota. Storage is calculated every 6-12 hours. See [the documentation](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#calculating-minute-and-storage-spending) for more info.
 
 ### Zip archives
 
@@ -427,18 +366,8 @@ If you must preserve permissions, you can `tar` all of your files together befor
   run: tar -cvf my_files.tar /path/to/my/directory
 
 - name: 'Upload Artifact'
-  uses: actions/upload-artifact@v4
+  uses: namespace-actions/upload-artifact@v0
   with:
     name: my-artifact
     path: my_files.tar
 ```
-
-## Where does the upload go?
-
-At the bottom of the workflow summary page, there is a dedicated section for artifacts. Here's a screenshot of something you might see:
-
-<img src="https://user-images.githubusercontent.com/16109154/103645952-223c6880-4f59-11eb-8268-8dca6937b5f9.png" width="700" height="300">
-
-There is a trashcan icon that can be used to delete the artifact. This icon will only appear for users who have write permissions to the repository.
-
-The size of the artifact is denoted in bytes. The displayed artifact size denotes the size of the zip that `upload-artifact` creates during upload.
