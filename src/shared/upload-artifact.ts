@@ -20,8 +20,7 @@ export async function uploadArtifact(
   )
   core.setOutput('artifact-id', uploadResponse.id)
 
-  const repository = github.context.repo
-  const artifactURL = `${github.context.serverUrl}/${repository.owner}/${repository.repo}/actions/runs/${github.context.runId}/artifacts/${uploadResponse.id}`
+  const artifactURL = uploadResponse.downloadUrl
 
   core.info(`Artifact download URL: ${artifactURL}`)
   core.setOutput('artifact-url', artifactURL)
