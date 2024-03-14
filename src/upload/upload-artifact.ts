@@ -62,6 +62,11 @@ export async function run(): Promise<void> {
     if (inputs.retentionDays) {
       options.retentionDays = inputs.retentionDays
     }
+    if (inputs.retentionDays && inputs.retentionDays != 30) {
+      core.warning(
+        `Namespace artifacts storage retains objects for 30 days. retentionDays=${inputs.retentionDays} will not be honored.`
+      )
+    }
 
     if (typeof inputs.compressionLevel !== 'undefined') {
       options.compressionLevel = inputs.compressionLevel
