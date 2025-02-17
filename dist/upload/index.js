@@ -847,10 +847,11 @@ class CreateArtifactRequest$Type extends runtime_5.MessageType {
             { no: 4, name: "expires_at", kind: "message", T: () => timestamp_1.Timestamp },
             { no: 5, name: "version", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
             { no: 6, name: "run_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 7, name: "attempt_no", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
         ]);
     }
     create(value) {
-        const message = { runId: "", workflowRunBackendId: "", workflowJobRunBackendId: "", name: "", version: 0 };
+        const message = { runId: "", attemptNo: 0, workflowRunBackendId: "", workflowJobRunBackendId: "", name: "", version: 0 };
         globalThis.Object.defineProperty(message, runtime_4.MESSAGE_TYPE, { enumerable: false, value: this });
         if (value !== undefined)
             (0, runtime_3.reflectionMergePartial)(this, message, value);
@@ -980,10 +981,11 @@ class FinalizeArtifactRequest$Type extends runtime_5.MessageType {
             { no: 6, name: "etag", kind: "scalar", T: 9 },
             { no: 6, name: "upload_id", kind: "scalar", T: 9 },
             { no: 8, name: "run_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 9, name: "attempt_no", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
         ]);
     }
     create(value) {
-        const message = { runId: "", workflowRunBackendId: "", workflowJobRunBackendId: "", name: "", size: "0", etag: "", uploadId: "" };
+        const message = { runId: "", attemptNo: 0, workflowRunBackendId: "", workflowJobRunBackendId: "", name: "", size: "0", etag: "", uploadId: "" };
         globalThis.Object.defineProperty(message, runtime_4.MESSAGE_TYPE, { enumerable: false, value: this });
         if (value !== undefined)
             (0, runtime_3.reflectionMergePartial)(this, message, value);
@@ -1228,10 +1230,11 @@ class ListArtifactsResponse_MonolithArtifact$Type extends runtime_5.MessageType 
             { no: 5, name: "size", kind: "scalar", T: 3 /*ScalarType.INT64*/ },
             { no: 6, name: "created_at", kind: "message", T: () => timestamp_1.Timestamp },
             { no: 7, name: "run_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 8, name: "attempt_no", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
         ]);
     }
     create(value) {
-        const message = { runId: "", workflowRunBackendId: "", workflowJobRunBackendId: "", databaseId: "0", name: "", size: "0" };
+        const message = { runId: "", attemptNo: 0, workflowRunBackendId: "", workflowJobRunBackendId: "", databaseId: "0", name: "", size: "0" };
         globalThis.Object.defineProperty(message, runtime_4.MESSAGE_TYPE, { enumerable: false, value: this });
         if (value !== undefined)
             (0, runtime_3.reflectionMergePartial)(this, message, value);
@@ -1308,10 +1311,11 @@ class GetSignedArtifactURLRequest$Type extends runtime_5.MessageType {
             { no: 2, name: "workflow_job_run_backend_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 3, name: "name", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 4, name: "run_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 5, name: "attempt_no", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
         ]);
     }
     create(value) {
-        const message = { runId: "", workflowRunBackendId: "", workflowJobRunBackendId: "", name: "" };
+        const message = { runId: "", attemptNo: 0, workflowRunBackendId: "", workflowJobRunBackendId: "", name: "" };
         globalThis.Object.defineProperty(message, runtime_4.MESSAGE_TYPE, { enumerable: false, value: this });
         if (value !== undefined)
             (0, runtime_3.reflectionMergePartial)(this, message, value);
@@ -2263,7 +2267,7 @@ exports.deleteArtifactPublic = deleteArtifactPublic;
 function deleteArtifactInternal(artifactName) {
     return __awaiter(this, void 0, void 0, function* () {
         const artifactClient = (0, artifact_twirp_client_1.internalArtifactTwirpClient)();
-        const { publicRunId, workflowRunBackendId, workflowJobRunBackendId } = (0, util_1.getBackendIdsFromToken)();
+        const { publicRunId, attemptNo, workflowRunBackendId, workflowJobRunBackendId } = (0, util_1.getBackendIdsFromToken)();
         const listReq = {
             runId: publicRunId,
             workflowRunBackendId,
@@ -2340,9 +2344,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.downloadArtifactInternal = exports.downloadArtifactPublic = exports.streamExtractExternal = void 0;
 const promises_1 = __importDefault(__nccwpck_require__(73292));
-const stream = __importStar(__nccwpck_require__(12781));
-const fs_1 = __nccwpck_require__(57147);
-const path = __importStar(__nccwpck_require__(71017));
 const github = __importStar(__nccwpck_require__(41962));
 const core = __importStar(__nccwpck_require__(42186));
 const httpClient = __importStar(__nccwpck_require__(96255));
@@ -2383,11 +2384,8 @@ function streamExtract(url, directory) {
                 return;
             }
             catch (error) {
-                if (error.message.includes('Malformed extraction path')) {
-                    throw new Error(`Artifact download failed with unretryable error: ${error.message}`);
-                }
                 retryCount++;
-                core.debug(`Failed to download artifact after ${retryCount} retries due to ${error.message}. Retrying in 5 seconds...`);
+                core.error(`Failed to download artifact after ${retryCount} retries due to ${error.message}. Retrying in 5 seconds...`);
                 // wait 5 seconds before retrying
                 yield new Promise(resolve => setTimeout(resolve, 5000));
             }
@@ -2408,8 +2406,6 @@ function streamExtractExternal(url, directory) {
                 response.message.destroy(new Error(`Blob storage chunk did not respond in ${timeout}ms`));
             };
             const timer = setTimeout(timerFn, timeout);
-            const createdDirectories = new Set();
-            createdDirectories.add(directory);
             response.message
                 .on('data', () => {
                 timer.refresh();
@@ -2419,50 +2415,11 @@ function streamExtractExternal(url, directory) {
                 clearTimeout(timer);
                 reject(error);
             })
-                .pipe(unzip_stream_1.default.Parse())
-                .pipe(new stream.Transform({
-                objectMode: true,
-                transform: (entry, _, callback) => __awaiter(this, void 0, void 0, function* () {
-                    const fullPath = path.normalize(path.join(directory, entry.path));
-                    if (!directory.endsWith(path.sep)) {
-                        directory += path.sep;
-                    }
-                    if (!fullPath.startsWith(directory)) {
-                        reject(new Error(`Malformed extraction path: ${fullPath}`));
-                    }
-                    core.debug(`Extracting artifact entry: ${fullPath}`);
-                    if (entry.type === 'Directory') {
-                        if (!createdDirectories.has(fullPath)) {
-                            createdDirectories.add(fullPath);
-                            yield resolveOrCreateDirectory(fullPath).then(() => {
-                                entry.autodrain();
-                                callback();
-                            });
-                        }
-                        else {
-                            entry.autodrain();
-                            callback();
-                        }
-                    }
-                    else {
-                        if (!createdDirectories.has(path.dirname(fullPath))) {
-                            createdDirectories.add(path.dirname(fullPath));
-                            yield resolveOrCreateDirectory(path.dirname(fullPath)).then(() => {
-                                entry.autodrain();
-                                callback();
-                            });
-                        }
-                        const writeStream = (0, fs_1.createWriteStream)(fullPath);
-                        writeStream.on('finish', callback);
-                        writeStream.on('error', reject);
-                        entry.pipe(writeStream);
-                    }
-                })
-            }))
-                .on('finish', () => __awaiter(this, void 0, void 0, function* () {
+                .pipe(unzip_stream_1.default.Extract({ path: directory }))
+                .on('close', () => {
                 clearTimeout(timer);
                 resolve();
-            }))
+            })
                 .on('error', (error) => {
                 reject(error);
             });
@@ -2508,7 +2465,7 @@ function downloadArtifactInternal(artifactId, options) {
     return __awaiter(this, void 0, void 0, function* () {
         const downloadPath = yield resolveOrCreateDirectory(options === null || options === void 0 ? void 0 : options.path);
         const artifactClient = (0, artifact_twirp_client_1.internalArtifactTwirpClient)();
-        const { publicRunId, workflowRunBackendId, workflowJobRunBackendId } = (0, util_1.getBackendIdsFromToken)();
+        const { publicRunId, attemptNo, workflowRunBackendId, workflowJobRunBackendId } = (0, util_1.getBackendIdsFromToken)();
         const listReq = {
             runId: publicRunId,
             workflowRunBackendId,
@@ -2524,6 +2481,7 @@ function downloadArtifactInternal(artifactId, options) {
         }
         const signedReq = {
             runId: artifacts[0].runId,
+            attemptNo: attemptNo,
             workflowRunBackendId: artifacts[0].workflowRunBackendId,
             workflowJobRunBackendId: artifacts[0].workflowJobRunBackendId,
             name: artifacts[0].name
@@ -2653,7 +2611,7 @@ exports.getArtifactPublic = getArtifactPublic;
 function getArtifactInternal(artifactName) {
     return __awaiter(this, void 0, void 0, function* () {
         const artifactClient = (0, artifact_twirp_client_1.internalArtifactTwirpClient)();
-        const { publicRunId, workflowRunBackendId, workflowJobRunBackendId } = (0, util_1.getBackendIdsFromToken)();
+        const { publicRunId, attemptNo, workflowRunBackendId, workflowJobRunBackendId } = (0, util_1.getBackendIdsFromToken)();
         const req = {
             runId: publicRunId,
             workflowRunBackendId,
@@ -2990,7 +2948,6 @@ class ArtifactHttpClient {
                 catch (error) {
                     if (error instanceof SyntaxError) {
                         (0, core_1.debug)(`Raw Body: ${rawBody}`);
-                        throw error;
                     }
                     if (error instanceof errors_1.UsageError) {
                         throw error;
@@ -3149,8 +3106,9 @@ function isGhes() {
     const ghUrl = new URL(process.env['GITHUB_SERVER_URL'] || 'https://github.com');
     const hostname = ghUrl.hostname.trimEnd().toUpperCase();
     const isGitHubHost = hostname === 'GITHUB.COM';
-    const isGheHost = hostname.endsWith('.GHE.COM') || hostname.endsWith('.GHE.LOCALHOST');
-    return !isGitHubHost && !isGheHost;
+    const isGheHost = hostname.endsWith('.GHE.COM');
+    const isLocalHost = hostname.endsWith('.LOCALHOST');
+    return !isGitHubHost && !isGheHost && !isLocalHost;
 }
 exports.isGhes = isGhes;
 function getGitHubWorkspaceDir() {
@@ -3361,10 +3319,15 @@ function getBackendIdsFromToken() {
         if (publicRunId == null) {
             throw new Error("failed to get GITHUB_RUN_ID environment variable");
         }
+        const attemptNo = process.env["GITHUB_RUN_ATTEMPT"];
+        if (attemptNo == null) {
+            throw new Error("failed to get GITHUB_RUN_ATTEMPT environment variable");
+        }
         const ids = {
             workflowRunBackendId: scopeParts[1],
             workflowJobRunBackendId: scopeParts[2],
             publicRunId: publicRunId,
+            attemptNo: Number(attemptNo),
         };
         core.debug(`Workflow Run Backend ID: ${ids.workflowRunBackendId}`);
         core.debug(`Workflow Job Run Backend ID: ${ids.workflowJobRunBackendId}`);
@@ -3701,6 +3664,7 @@ function uploadArtifact(name, files, rootDirectory, options) {
         // create the artifact
         const createArtifactReq = {
             runId: backendIds.publicRunId,
+            attemptNo: backendIds.attemptNo,
             workflowRunBackendId: backendIds.workflowRunBackendId,
             workflowJobRunBackendId: backendIds.workflowJobRunBackendId,
             name,
@@ -3721,6 +3685,7 @@ function uploadArtifact(name, files, rootDirectory, options) {
         // finalize the artifact
         const finalizeArtifactReq = {
             runId: backendIds.publicRunId,
+            attemptNo: backendIds.attemptNo,
             workflowRunBackendId: backendIds.workflowRunBackendId,
             workflowJobRunBackendId: backendIds.workflowJobRunBackendId,
             name,
@@ -128056,7 +128021,7 @@ module.exports = parseParams
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@actions/artifact","version":"2.1.2","preview":true,"description":"Actions artifact lib","keywords":["github","actions","artifact"],"homepage":"https://github.com/actions/toolkit/tree/main/packages/artifact","license":"MIT","main":"lib/artifact.js","types":"lib/artifact.d.ts","directories":{"lib":"lib","test":"__tests__"},"files":["lib","!.DS_Store"],"publishConfig":{"access":"public"},"repository":{"type":"git","url":"git+https://github.com/actions/toolkit.git","directory":"packages/artifact"},"scripts":{"audit-moderate":"npm install && npm audit --json --audit-level=moderate > audit.json","test":"cd ../../ && npm run test ./packages/artifact","bootstrap":"cd ../../ && npm run bootstrap","tsc-run":"tsc","tsc":"npm run bootstrap && npm run tsc-run","gen:docs":"typedoc --plugin typedoc-plugin-markdown --out docs/generated src/artifact.ts --githubPages false --readme none"},"bugs":{"url":"https://github.com/actions/toolkit/issues"},"dependencies":{"@actions/core":"^1.10.0","@actions/github":"^5.1.1","@actions/http-client":"^2.1.0","@azure/storage-blob":"^12.15.0","@octokit/core":"^3.5.1","@octokit/plugin-request-log":"^1.0.4","@octokit/plugin-retry":"^3.0.9","@octokit/request-error":"^5.0.0","@protobuf-ts/plugin":"^2.2.3-alpha.1","archiver":"^5.3.1","crypto":"^1.0.1","jwt-decode":"^3.1.2","twirp-ts":"^2.5.0","unzip-stream":"^0.3.1"},"devDependencies":{"@types/archiver":"^5.3.2","@types/unzip-stream":"^0.3.4","typedoc":"^0.25.4","typedoc-plugin-markdown":"^3.17.1","typescript":"^5.2.2"}}');
+module.exports = JSON.parse('{"name":"@actions/artifact","version":"2.1.8","preview":true,"description":"Actions artifact lib","keywords":["github","actions","artifact"],"homepage":"https://github.com/actions/toolkit/tree/main/packages/artifact","license":"MIT","main":"lib/artifact.js","types":"lib/artifact.d.ts","directories":{"lib":"lib","test":"__tests__"},"files":["lib","!.DS_Store"],"publishConfig":{"access":"public"},"repository":{"type":"git","url":"git+https://github.com/actions/toolkit.git","directory":"packages/artifact"},"scripts":{"audit-moderate":"npm install && npm audit --json --audit-level=moderate > audit.json","test":"cd ../../ && npm run test ./packages/artifact","bootstrap":"cd ../../ && npm run bootstrap","tsc-run":"tsc","tsc":"npm run bootstrap && npm run tsc-run","gen:docs":"typedoc --plugin typedoc-plugin-markdown --out docs/generated src/artifact.ts --githubPages false --readme none"},"bugs":{"url":"https://github.com/actions/toolkit/issues"},"dependencies":{"@actions/core":"^1.10.0","@actions/github":"^5.1.1","@actions/http-client":"^2.1.0","@azure/storage-blob":"^12.15.0","@octokit/core":"^3.5.1","@octokit/plugin-request-log":"^1.0.4","@octokit/plugin-retry":"^3.0.9","@octokit/request-error":"^5.0.0","@protobuf-ts/plugin":"^2.2.3-alpha.1","archiver":"^7.0.1","crypto":"^1.0.1","jwt-decode":"^3.1.2","twirp-ts":"^2.5.0","unzip-stream":"^0.3.1"},"devDependencies":{"@types/archiver":"^5.3.2","@types/unzip-stream":"^0.3.4","typedoc":"^0.25.4","typedoc-plugin-markdown":"^3.17.1","typescript":"^5.2.2"}}');
 
 /***/ }),
 
