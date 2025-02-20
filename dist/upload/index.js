@@ -982,10 +982,11 @@ class FinalizeArtifactRequest$Type extends runtime_5.MessageType {
             { no: 6, name: "upload_id", kind: "scalar", T: 9 },
             { no: 8, name: "run_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 9, name: "attempt_no", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
+            { no: 10, name: "version", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
         ]);
     }
     create(value) {
-        const message = { runId: "", attemptNo: 0, workflowRunBackendId: "", workflowJobRunBackendId: "", name: "", size: "0", etag: "", uploadId: "" };
+        const message = { runId: "", attemptNo: 0, version: 0, workflowRunBackendId: "", workflowJobRunBackendId: "", name: "", size: "0", etag: "", uploadId: "" };
         globalThis.Object.defineProperty(message, runtime_4.MESSAGE_TYPE, { enumerable: false, value: this });
         if (value !== undefined)
             (0, runtime_3.reflectionMergePartial)(this, message, value);
@@ -3668,7 +3669,7 @@ function uploadArtifact(name, files, rootDirectory, options) {
             workflowRunBackendId: backendIds.workflowRunBackendId,
             workflowJobRunBackendId: backendIds.workflowJobRunBackendId,
             name,
-            version: 4
+            version: 5,
         };
         // if there is a retention period, add it to the request
         const expiresAt = (0, retention_1.getExpiration)(options === null || options === void 0 ? void 0 : options.retentionDays);
@@ -3692,6 +3693,7 @@ function uploadArtifact(name, files, rootDirectory, options) {
             size: uploadResult.uploadSize ? uploadResult.uploadSize.toString() : '0',
             etag: (_a = uploadResult.uploadEtag) !== null && _a !== void 0 ? _a : '',
             uploadId: createArtifactResp.uploadId,
+            version: 5,
         };
         if (uploadResult.sha256Hash) {
             finalizeArtifactReq.hash = generated_1.StringValue.create({
