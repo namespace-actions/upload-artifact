@@ -60,6 +60,9 @@ export async function run(): Promise<void> {
 
     const options: UploadArtifactOptions = {}
     if (inputs.retentionDays) {
+      if (inputs.retentionDays > 30) {
+        core.warning(`Namespace artifacts storage retains objects for a maximum of 30 days. retentionDays=${inputs.retentionDays} will not be honored.`)
+      }
       options.retentionDays = inputs.retentionDays
     }
 
