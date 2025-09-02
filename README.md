@@ -29,10 +29,8 @@ Download artifacts with [download-artifact](https://github.com/namespace-actions
     # Optional. Default is 'warn'
     if-no-files-found:
 
-    # Duration after which artifact will expire in days. 0 means using default retention.
-    # Minimum 1 day.
-    # Maximum 90 days unless changed from the repository settings page.
-    # Optional. Defaults to repository settings.
+    # Duration after which artifact will expire in days. 0 means using default retention of 30 days.
+    # The maximum allowed is 30 days.
     retention-days:
 
     # The level of compression for Zlib to be applied to the artifact archive.

@@ -19,10 +19,8 @@ inputs:
     default: 'warn'
   retention-days:
     description: >
-      Duration after which artifact will expire in days. 0 means using default retention.
-
-      Minimum 1 day.
-      Maximum 90 days unless changed from the repository settings page.
+      Duration after which the artifact will expire in days.
+      0 means using default retention which is 30 days. The maximum allowed is 30 days.
   compression-level:
     description: >
       The level of compression for Zlib to be applied to the artifact archive.
